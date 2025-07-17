@@ -36,29 +36,88 @@ char obs[3][10] = {"obs1.png","obs2.png","obs3.png"};
 char cloud[7][13] = {"cloud1.png","cloud2.png","cloud3.png","cloud4.png","cloud5.png","cloud6.png","cloud7.png"};
 char menu[5][15] = {"menu_1.png","menu_2.png","menu_3.png","menu_4.png","menu_5.png"};
 char menuBig[5][20] = {"menu_1_big.png","menu_2_big.png","menu_3_big.png","menu_4_big.png","menu_5_big.png"};
+char bird1files[9][14]={"tile001.png","tile002.png","tile003.png","tile004.png",
+                        "tile005.png","tile006.png","tile007.png","tile008.png","tile009.png"};   
+char bird2files[6][10]={"bb1.png","bb2.png","bb3.png","bb4.png","bb5.png","bb6.png"}; 
+char bird3files[10][15]={"bbb1.png","bbb2.png","bbb3.png","bbb4.png","bbb5.png",
+                        "bbb6.png","bbb7.png","bbb8.png","bbb9.png","bbb10.png"};
 
 bool hoverMenu[5] = {false};
-int menuX[5] = {100, 300, 20, 185, 350};
-int menuY[5] = {300, 300, 50, 50, 50};
-int menuW = 120, menuH = 160;
+int menuX[5] = {350, 850, 100, 610, 1120};
+int menuY[5] = {220, 200, 20, 20, 20};
+int menuW = 200, menuH = 200;
+
 
 Image menuBigImg[5], cloudImg[7], skyImg, heartbreak, menuImg[5], menuImghab, back;
-Image habimgfrm[10], obsimgfrm[3];
-Sprite habimg[10], obsimg[3];
+Image habimgfrm[10], obsimgfrm[3],bird1frm[9],bird2frm[6],bird3frm[10];
+
+Sprite habimg[10], obsimg[3],bird1,bird2,bird3;
+
+int bird1idx=0;
+int bird1x=1400,bird1y=600;
+int bird1speed=15;
+bool bird1active=true;
+
+int bird2idx=0;
+int bird2x=1400,bird2y=450;
+int bird2speed=10;
+bool bird2active=true;
+
+int bird3idx=0;
+int bird3x=1400,bird3y=100;
+int bird3speed=12;
+bool bird3active=true;
 
 int gamestate = 0;
 int score = 0, scoretick = 0;
 int bi = 0;
 int obsx[3], obsy[3], obsi[3];
-int x = 200, y = 70;
+int x = 700, y = 70;
 int easy;
 bool isObsActive[3] = {true, true, true};
 bool showHeartbreak = false;
 int heartbreakCounter = 0;
 
-double c1x=100,c2x=150,c3x=200,c4x=400,c5x=250,c6x=320,c7x=425;
+double c1x=200,c2x=350,c3x=500,c4x=800,c5x=600,c6x=920,c7x=1225;
 double c1y=114,c2y=229,c3y=343,c4y=457,c5y=500,c6y=686,c7y=800;
 
+void moveBird1() {
+    if (!bird1active) return;
+
+    bird1x += bird1speed;
+    if (bird1x >1500){ bird1x = -100; // Reset to right side after going off screen
+    bird1y = 200+rand() % 300; // Randomize vertical position
+    }
+
+    iSetSpritePosition(&bird1, bird1x, bird1y);
+
+    bird1idx = (bird1idx + 1) % 9;
+    iChangeSpriteFrames(&bird1, bird1frm + bird1idx, 1);
+}
+void moveBird2() {
+    if (!bird2active) return;
+
+    bird2x += bird2speed;
+    if (bird2x >1500) {bird2x = -100; // Reset to right side after going off screen
+    bird2y = 250 +rand() % 300; // Randomize vertical position
+    }
+    iSetSpritePosition(&bird2, bird2x, bird2y);
+
+    bird2idx = (bird2idx + 1) % 6;
+    iChangeSpriteFrames(&bird2, bird2frm + bird2idx, 1);
+}
+void moveBird3() {
+    if (!bird3active) return;
+
+    bird3x -= bird3speed;   
+    if (bird3x<-100) {
+        bird3x = 1500; // Reset to right side after going off screen
+        bird3y = rand() % 100; // Randomize vertical position
+    }
+    iSetSpritePosition(&bird3, bird3x, bird3y); 
+    bird3idx = (bird3idx + 1) % 10; // Cycle through bird3 frames
+    iChangeSpriteFrames(&bird3, bird3frm + bird3idx, 1);
+}
 void scoreupdate() {
     scoretick++;
     if(scoretick % 9 == 0) {
@@ -101,28 +160,32 @@ void addHighScore(string name, int score) {
 void move() {
     if (isSpecialKeyPressed(GLUT_KEY_RIGHT)) x += 15;
     if (isSpecialKeyPressed(GLUT_KEY_LEFT)) x -= 15;
-    if (x > 460) x = -40;
-    if (x < -40) x = 460;
+
+     if (isSpecialKeyPressed(GLUT_KEY_UP))    y += 15;
+    if (isSpecialKeyPressed(GLUT_KEY_DOWN))  y -= 15;
+    if (x > 1360) x = -40;
+    if (x < -40) x = 1360;
+     if (y > 760) y = 760;
+    if (y < 0)   y = 0;
     iSetSpritePosition(&habimg[bi], x, y);
 }
-
 void obstacle() {
     for (int i = 0; i < 3; i++) {
         if (isObsActive[i]) {
             obsy[i] -= obstacleSpeed;
-            if (obsy[i] < -50) {
+            if (obsy[i] < -150) {
                 obsy[i] = 800;
-                obsx[i] = rand() % 300;
+                obsx[i] = rand() % 1300;
                 obsi[i] = rand() % 3;
                 iChangeSpriteFrames(&obsimg[i], &obsimgfrm[obsi[i]], 1);
             }
             iSetSpritePosition(&obsimg[i], obsx[i], obsy[i]);
         } else {
             obsy[i] -= obstacleSpeed;
-            if (obsy[i] < -50) {
+            if (obsy[i] < -150) {
                 isObsActive[i] = true;
                 obsy[i] = 800;
-                obsx[i] = rand() % 300;
+                obsx[i] = rand() % 1300;
                 obsi[i] = rand() % 3;
                 iChangeSpriteFrames(&obsimg[i], &obsimgfrm[obsi[i]], 1);
             }
@@ -142,14 +205,11 @@ void cldx() {
     double speed[] = {.2, -.1, -.3, .5, .25, -.3, .8};
     for (int i = 0; i < 7; i++) {
         *cx[i] += speed[i];
-               if (speed[i] > 0 && *cx[i] > 550) {     // Moving right
-            *cx[i] = -150;
-        }
-        else if (speed[i] < 0 && *cx[i] < -150) { // Moving left
-            *cx[i] = 550;
+               if (speed[i] > 0 && *cx[i] > 1450) *cx[i] = -150;
+        
+        else if (speed[i] < 0 && *cx[i] < -150) *cx[i] = 1450;
         }
     }
-}
 
 void cldy() {
     double* cy[] = {&c1y, &c2y, &c3y, &c4y, &c5y, &c6y, &c7y};
@@ -174,7 +234,7 @@ void iDraw() {
 
     if (gamestate == 0) {
         // Main menu
-        iShowLoadedImage(50, 530, &menuImghab);
+        iShowLoadedImage(600, 530, &menuImghab);
         for (int i = 0; i < 5; i++) {
             if (hoverMenu[i]) 
                 iShowLoadedImage(menuX[i] - 10, menuY[i] - 10, &menuBigImg[i]);
@@ -204,8 +264,58 @@ void iDraw() {
                         iResumeSound(easy);
                     }
                 }
+                if (iCheckCollision(&habimg[bi], &bird1)) {
+                    bird1x= -100; // Reset bird position
+                    showHeartbreak = true;
+                    heartbreakCounter = 60;
+                    iPauseSound(easy);
+                    iPlaySound("wrong.wav", false, 80);
+                    health--;
+
+                    if (health <= 0) {
+                        finalScore = score;
+                        addHighScore(playerName, finalScore);
+                        gamestate = 6;  // Switch to Game Over screen
+                    } else {
+                        iResumeSound(easy);
+                    }
+                }
+                if(iCheckCollision(&habimg[bi], &bird2)) {
+                    bird2x= -100; // Reset bird position
+                    showHeartbreak = true;
+                    heartbreakCounter = 60;
+                    iPauseSound(easy);
+                    iPlaySound("wrong.wav", false, 80);
+                    health--;
+
+                    if (health <= 0) {
+                        finalScore = score;
+                        addHighScore(playerName, finalScore);
+                        gamestate = 6;  // Switch to Game Over screen
+                    } else {
+                        iResumeSound(easy);
+                    }
+                }
+                if(iCheckCollision(&habimg[bi], &bird3)) {
+                    bird3x= -100; // Reset bird position
+                    showHeartbreak = true;
+                    heartbreakCounter = 60;
+                    iPauseSound(easy);
+                    iPlaySound("wrong.wav", false, 80);
+                    health--;
+                    if(health <= 0) {
+                        finalScore = score;
+                        addHighScore(playerName, finalScore);
+                        gamestate = 6;  // Switch to Game Over screen
+                    } else {
+                        iResumeSound(easy);
+                    }
+                    
+                }
             }
         }
+                
+        
 
         if (showHeartbreak) {
             iShowLoadedImage(200, 400, &heartbreak);
@@ -221,7 +331,16 @@ void iDraw() {
         char lifeStr[20];
         sprintf(lifeStr, "Lives: %d", health);
         iText(10, 720, lifeStr, GLUT_BITMAP_HELVETICA_18);
+        if (bird1active) {
+    iShowSprite(&bird1);
     }
+    if( bird2active) {
+    iShowSprite(&bird2);
+    }
+    if( bird3active) {
+    iShowSprite(&bird3); // <-- Add this line to show bird3
+    }
+}
     else if (gamestate == 3) {
         // Name input screen
         iSetColor(255, 255, 255);
@@ -261,13 +380,6 @@ void iDraw() {
         iShowLoadedImage(420, 740, &back);
     }
 }
-
-
-
-/*
-function iMouseMove() is called when the user moves the mouse.
-(mx, my) is the position where the mouse pointer is.
-*/
 void iMouseMove(int mx, int my)
 {
     // place your codes here
@@ -277,27 +389,17 @@ void iMouseMove(int mx, int my)
                         my >= menuY[i] && my <= menuY[i] + menuH);
     }
 }
-
-/*
-function iMouseDrag() is called when the user presses and drags the mouse.
-(mx, my) is the position where the mouse pointer is.
-*/
 void iMouseDrag(int mx, int my)
 {
     // place your codes here
 }
-
-/*
-function iMouse() is called when the user presses/releases the mouse.
-(mx, my) is the position where the mouse pointer is.
-*/
 void iMouse(int button, int state, int mx, int my)
 {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
     {
         if(gamestate== 0) 
         {
-            if(mx >= 110 && mx <= 220 && my >=310 && my <= 462) // Start Game
+            if(mx >= 350 && mx <= (350+190) && my >=220 && my <= (220+268)) // Start Game
             {
                gamestate = 3;
                inputName = true;
@@ -305,20 +407,20 @@ void iMouse(int button, int state, int mx, int my)
                playerNameIndex = 0;
                 iResumeSound(easy);
             }
-            else if(mx >= 290 && mx <=420 && my >=310 && my <=470) // Instructions
+            else if(mx >= 850 && mx <=(850+190) && my >=200 && my <=(200+268)) // high
             {
                 gamestate=2;
                 // Show instructions (not implemented)
             }
-            else if(mx >= 30 && mx <= 140 && my >= 60 && my <= 210) // Exit
+            else if(mx >= 100 && mx <= (100+190)&& my >= 20 && my <= (20+268)) // help
             {
                  
             }
-            else if(mx >= 195 && mx <= 310 && my >= 60 && my <=220) // About
+            else if(mx >= 610 && mx <= (610+190) && my >= 20 && my <=288) // About
             {
                 gamestate = 4;
             }
-            else if(mx >= 360 && mx <= 480 && my >= 60 && my <= 210) // Credits
+            else if(mx >=1120 && mx <= (1120+190)&& my >= 20 && my <=288 ) // exit
             {
                 exit(0);
             }
@@ -336,11 +438,6 @@ void iMouse(int button, int state, int mx, int my)
             
     }
 }
-
-/*
-function iMouseWheel() is called when the user scrolls the mouse wheel.
-dir = 1 for up, -1 for down.
-*/
 void iMouseWheel(int dir, int mx, int my)
 {
     // place your code here
@@ -366,7 +463,7 @@ void iKeyboard(unsigned char key)
 
         for (int i = 0; i < 3; i++) {
             obsy[i] = 800 + i * 267;
-            obsx[i] = rand() % 300;
+            obsx[i] = rand() % 1300;
             obsi[i] = rand() % 3;
             isObsActive[i] = true;
             iChangeSpriteFrames(&obsimg[i], &obsimgfrm[obsi[i]], 1);
@@ -390,52 +487,78 @@ int main(int argc, char *argv[])
 {
     glutInit(&argc, argv);
     srand(time(0));
-    for(int i = 0; i < 3; i++) {
+
+    // Load balloon images first
+    for (int j = 0; j < 10; j++) {
+        iLoadImage(&habimgfrm[j], hab[j]);
+    }
+
+
+    for (int i = 0; i < 9; i++) {
+    iLoadImage(&bird1frm[i], bird1files[i]);
+}
+for(int i=0; i < 6; i++) {
+    iLoadImage(&bird2frm[i], bird2files[i]);
+}
+for(int i=0; i < 10; i++) {
+    iLoadImage(&bird3frm[i], bird3files[i]);
+}
+iInitSprite(&bird1);
+iInitSprite(&bird2);
+iInitSprite(&bird3);
+iChangeSpriteFrames(&bird1, bird1frm, 9);
+iSetSpritePosition(&bird1, bird1x, bird1y);
+iChangeSpriteFrames(&bird2, bird2frm, 6);
+iSetSpritePosition(&bird2, bird2x, bird2y);
+iChangeSpriteFrames(&bird3, bird3frm, 10);
+iSetSpritePosition(&bird3, bird3x, bird3y);
+
+iSetTimer(100, moveBird1);
+iSetTimer(100, moveBird2);
+iSetTimer(100, moveBird3);
+    // Initialize balloon sprites & set frames & position
+    for (int i = 0; i < 10; i++) {
+        iInitSprite(&habimg[i]);
+        iChangeSpriteFrames(&habimg[i], &habimgfrm[i], 1);
+        iSetSpritePosition(&habimg[i], x, y);
+    }
+
+    // Load obstacle images
+    for (int i = 0; i < 3; i++) {
         iLoadImage(&obsimgfrm[i], obs[i]);
     }
-    iInitSprite(&habimg[0]);
-    iChangeSpriteFrames(&habimg[0], &habimgfrm[0], 1);
-    iSetSpritePosition(&habimg[0], x, y);
-    loadHighScores();
 
+    // Initialize obstacle sprites & set frames & position
     for (int i = 0; i < 3; i++) {
         iInitSprite(&obsimg[i]);
-        obsi[i] = rand() % 3; // Randomly select an obstacle image
+        obsi[i] = rand() % 3; // Random obstacle image index
         iChangeSpriteFrames(&obsimg[i], &obsimgfrm[obsi[i]], 1);
-        obsx[i] = rand() % 300;
-        obsy[i] = 800 + i * 267; // Start above the screen
+        obsx[i] = rand() % 1300;
+        obsy[i] = 800 + i * 267;
         iSetSpritePosition(&obsimg[i], obsx[i], obsy[i]);
     }
+
+    // Load other images (clouds, menus, backgrounds)
     for (int i = 0; i < 7; i++) {
-    iLoadImage(&cloudImg[i], cloud[i]); }
-
-
-    for(int j=0;j<10;j++)
-    {
-        iLoadImage(&habimgfrm[j],hab[j]);
+        iLoadImage(&cloudImg[i], cloud[i]);
     }
-    for(int i=0;i<5;i++)
-    {
-        iLoadImage(&menuImg[i],menu[i]);
+    for (int i = 0; i < 5; i++) {
+        iLoadImage(&menuImg[i], menu[i]);
         iLoadImage(&menuBigImg[i], menuBig[i]);
     }
     iLoadImage(&menuImghab, "menuhab.png");
     iLoadImage(&skyImg, "sky.jpg");
     iLoadImage(&heartbreak, "heartbreak.png");
     iLoadImage(&back, "backbutton.png");
-    iSetTimer(500,incmnt);
-    iSetTimer(16,cldx);
-    iSetTimer(16,cldy);
-    iSetTimer(1, move); 
-    iSetTimer(16,obstacle); 
-    iSetTimer(33,scoreupdate);
+
+    // Setup timers
+    iSetTimer(500, incmnt);
+    iSetTimer(16, cldx);
+    iSetTimer(16, cldy);
+    iSetTimer(1, move);
+    iSetTimer(16, obstacle);
+    iSetTimer(33, scoreupdate);
     iInitializeSound();
-    if (gamestate == 1)
-    {easy=iPlaySound("Easy.wav",true,80);} 
-    iInitialize(500, 800, "Hot Air Balloon");
-    
+    iInitialize(1400, 800, "Hot Air Balloon");
     return 0;
 }
-
-
-
